@@ -60,6 +60,28 @@ sentry_finishAndSaveTransaction(void)
 
 @implementation SentryCrashIntegration
 
+void
+saveAttachments(const char *path)
+{
+    NSString *attachmentsPath = [NSString stringWithUTF8String:path];
+
+    SentryScope *scope = SentrySDK.currentHub.scope;
+
+    @synchronized(scope.attachments) {
+        for (SentryAttachment *attachment in scope.attachments) {
+            NSString *filePath = [attachmentsPath stringByAppendingPathComponent: attachment.filename];
+
+            if (nil != attachment.filename) {
+                [[NSFileManager defaultManager] copyItemAtPath:attachment.path toPath:filePath error:nil];
+            }
+
+            if (nil != attachment.data) {
+                [attachment.data writeToFile:filePath atomically:YES];
+            }
+        }
+    }
+}
+
 - (instancetype)init
 {
     self = [self initWithCrashAdapter:[SentryCrashWrapper sharedInstance]
@@ -127,6 +149,8 @@ sentry_finishAndSaveTransaction(void)
     if (options.enablePersistingTracesWhenCrashing) {
         [self configureTracingWhenCrashing];
     }
+
+    sentrycrash_setSaveAttachments(&saveAttachments);
 
     return YES;
 }
@@ -212,6 +236,7 @@ sentry_finishAndSaveTransaction(void)
     }
 
     sentrycrash_setSaveTransaction(NULL);
+    sentrycrash_setSaveAttachments(NULL);
 
     [NSNotificationCenter.defaultCenter removeObserver:self
                                                   name:NSCurrentLocaleDidChangeNotification

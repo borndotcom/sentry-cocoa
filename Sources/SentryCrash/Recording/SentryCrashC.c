@@ -59,6 +59,8 @@ static char g_lastCrashReportFilePath[SentryCrashFU_MAX_PATH_LENGTH];
 static void (*g_saveScreenShot)(const char *) = 0;
 static void (*g_saveViewHierarchy)(const char *) = 0;
 static void (*g_saveTransaction)(void) = 0;
+static void (*g_saveAttachments)(const char *) = 0;
+
 // ============================================================================
 #pragma mark - Utility -
 // ============================================================================
@@ -94,19 +96,21 @@ onCrash(struct SentryCrash_MonitorContext *monitorContext)
     // because we gonna call into non async-signal safe code
     // but since the app is already in a crash state we don't
     // mind if this approach crashes.
-    if (g_saveScreenShot || g_saveViewHierarchy) {
-        char crashAttachmentsPath[SentryCrashCRS_MAX_PATH_LENGTH];
-        sentrycrashcrs_getAttachmentsPath_forReport(
+    char crashAttachmentsPath[SentryCrashCRS_MAX_PATH_LENGTH];
+    sentrycrashcrs_getAttachmentsPath_forReport(
             g_lastCrashReportFilePath, crashAttachmentsPath);
 
-        if (sentrycrashfu_makePath(crashAttachmentsPath)) {
-            if (g_saveScreenShot) {
-                g_saveScreenShot(crashAttachmentsPath);
-            }
+    if (sentrycrashfu_makePath(crashAttachmentsPath)) {
+        if (g_saveScreenShot) {
+            g_saveScreenShot(crashAttachmentsPath);
+        }
 
-            if (g_saveViewHierarchy) {
-                g_saveViewHierarchy(crashAttachmentsPath);
-            }
+        if (g_saveViewHierarchy) {
+            g_saveViewHierarchy(crashAttachmentsPath);
+        }
+
+        if (g_saveAttachments) {
+            g_saveAttachments(crashAttachmentsPath);
         }
     }
 
@@ -210,6 +214,12 @@ void
 sentrycrash_setSaveTransaction(void (*callback)(void))
 {
     g_saveTransaction = callback;
+}
+
+void
+sentrycrash_setSaveAttachments(void (*callback)(const char *))
+{
+    g_saveAttachments = callback;
 }
 
 void

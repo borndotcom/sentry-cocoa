@@ -145,6 +145,8 @@ void sentrycrash_setSaveViewHierarchy(SaveAttachmentCallback callback);
  */
 void sentrycrash_setSaveTransaction(void (*callback)(void));
 
+void sentrycrash_setSaveAttachments(void (*callback)(const char *));
+
 #pragma mark-- Notifications --
 
 /** Notify the crash reporter of the application active state.
