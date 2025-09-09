@@ -67,7 +67,7 @@ saveAttachments(const char *path)
 {
     NSString *attachmentsPath = [NSString stringWithUTF8String:path];
 
-    SentryScope *scope = SentrySDK.currentHub.scope;
+    SentryScope *scope = SentrySDKInternal.currentHub.scope;
 
     @synchronized(scope.attachments) {
         for (SentryAttachment *attachment in scope.attachments) {
